@@ -6,13 +6,13 @@ from test_style2 import *
 def show_coords(event):
     print(f"Mouse at ({event.x}, {event.y})")
 
-start = None
-end = None
+StrStart_sty = None
+StrEnd_sty = None
 start_circle = None
 end_circle = None
 
 def on_station_click(event): #클릭 이벤트
-    global start, end, start_circle, end_circle
+    global StrStart_sty, StrEnd_sty, start_circle, end_circle
     clicked = c.find_withtag("current") #마우스 클릭 -> 해당 리스트를 변수에 저장
 
     if not clicked:
@@ -25,9 +25,9 @@ def on_station_click(event): #클릭 이벤트
     
     station_name = tags[1]
 
-    if start is None:
+    if StrStart_sty is None:
         c.delete("highlight") #출발지 선택하면 이전 경로 사라짐
-        start = station_name
+        StrStart_sty = station_name
         x,y = stations[station_name]
 
         if start_circle:
@@ -36,13 +36,13 @@ def on_station_click(event): #클릭 이벤트
 
         start_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
         start_var.set(station_name) #콤보박스에도 역 이름 생성 
-        print(f"Start selected: {start}")
+        print(f"Start selected: {StrStart_sty}")
 
-    elif end is None:
-        if station_name == start:
+    elif StrEnd_sty is None:
+        if station_name == StrStart_sty:
             print("출발지와 도착지가 같을 수 없습니다.")
             return
-        end = station_name
+        StrEnd_sty = station_name
         x,y = stations[station_name]
 
         if end_circle: #출발지에서 이미 지우기 때문에 없어도 되지만 안정적으로 한 번 더 추가
@@ -50,15 +50,15 @@ def on_station_click(event): #클릭 이벤트
 
         end_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
         end_var.set(station_name)
-        path = find_path(start, end) 
+        path = find_path(StrStart_sty, StrEnd_sty) 
         result_var.set(" → ".join(path)) #좌표용 경로 표시
-        print(f"End selected: {end}")
+        print(f"End selected: {StrEnd_sty}")
 
-        draw_highlight_path(start, end)
+        draw_highlight_path(StrStart_sty, StrEnd_sty)
 
         #상태 초기화
-        start = None 
-        end = None
+        StrStart_sty = None 
+        StrEnd_sty = None
 
 def find_path(start,end):
     visited = set() #이미 방문한 역들 저장.
@@ -74,7 +74,7 @@ def find_path(start,end):
         if node not in visited:
             visited.add(node)  #방문 안 했을시 현재역을 방문 목록에 추가
 
-            for a,b in edges:
+        for a,b in edges:
                 #b가 방문을 안 했다면 path+[b]로 현재 경로 뒤에 추가
                 if a==node and b not in visited:
                     queue.append(path+[b])
@@ -121,7 +121,7 @@ def on_find_route():
     result_var.set(" → ".join(path)) #입력용 경로 표시
 
 # 역 좌표
-stations_1 = {
+Dict_stations_1 = {
     "설화명곡": (157, 127),
     "화원": (157, 157),
     "대곡": (157, 187),
@@ -140,30 +140,30 @@ stations_1 = {
     "명덕": (540, 260),
 
     "반월당": (563, 299),
-    "중앙로": (563, 376),
-    "대구역": (563, 406),
-    "칠성시장": (563, 436),
-    "신천": (569, 466),
-    "동대구역": (587, 490),
+    "중앙로": (563, 400),
+    "대구역": (563, 436),
+    "칠성시장": (563, 466),
+    "신천": (569, 496),
+    "동대구역": (577, 525),
 
-    "동구청": (605, 513),
-    "아양교": (640, 513),
-    "동촌": (680, 513),
-    "해안": (720, 513),
-    "방촌": (753, 513),
-    "용계": (787, 513),
+    "동구청": (615, 540),
+    "아양교": (655, 540),
+    "동촌": (695, 540),
+    "해안": (735, 540),
+    "방촌": (775, 540),
+    "용계": (815, 540),
 
-    "율하": (823, 523),
-    "신기": (847, 533),
-    "반야월": (865, 565),
-    "각산": (872, 595),
-    "안심": (872, 625),
-    "대구한의대병원": (872, 655),
-    "부호": (872, 685),
-    "하양": (872, 715),
+    "율하": (850, 545),
+    "신기": (870, 570),
+    "반야월": (875, 600),
+    "각산": (875, 630),
+    "안심": (875, 660),
+    "대구한의대병원": (875, 690),
+    "부호": (875, 720),
+    "하양": (875, 750),
 }
 
-stations_2 = {
+Dict_stations_2 = {
     "문양": (13, 209),
     "다사": (13, 239),
     "대실": (13, 269),
@@ -196,7 +196,7 @@ stations_2 = {
     "임당": (953, 479),
     "영남대": (953, 509),
 }
-stations_3 = {
+Dict_stations_3 = {
    "용지": (870, 90),
     "범물": (870, 120),
     "지산": (870, 150),
@@ -210,10 +210,10 @@ stations_3 = {
     "건들바위": (585, 255),
     "명덕": (540, 260),          # 고정
 
-    "남산": (516, 285),
+    "남산": (516, 275),
     "청라언덕": (513, 309),       # 고정
-    "서문시장": (513, 360),
-    "달성공원": (513, 390),
+    "서문시장": (513, 350),
+    "달성공원": (513, 385),
     "북구청": (510, 420),
     "원대": (490, 450),
     "팔달시장": (460, 470),
@@ -226,31 +226,29 @@ stations_3 = {
     "구암": (180, 490),
     "칠곡운암": (165, 530),
     "동천": (155, 570),
-    "팔거": (155, 600),
-    "학정": (155, 630),
-    "칠곡경대병원": (155, 660),
+    "팔거": (155, 610),
+    "학정": (155, 650),
+    "칠곡경대병원": (155, 690),
 }
-
-
 
 # 연결리스트
 edges_1 = [
-    (a, b) for a, b in zip(list(stations_1), list(stations_1)[1:])
+    (a, b) for a, b in zip(list(Dict_stations_1), list(Dict_stations_1)[1:])
 ]
 
 edges_2 = [
-    (a, b) for a, b in zip(list(stations_2), list(stations_2)[1:])
+    (a, b) for a, b in zip(list(Dict_stations_2), list(Dict_stations_2)[1:])
 ]
 
 edges_3 = [
-    (a, b) for a, b in zip(list(stations_3), list(stations_3)[1:]) 
+    (a, b) for a, b in zip(list(Dict_stations_3), list(Dict_stations_3)[1:]) 
 ]
 
-stations_1_shifted = {
-    name: (x, y - 60) for name, (x, y) in stations_1.items()
+Dict_stations_1_shifted = {
+    name: (x, y - 60) for name, (x, y) in Dict_stations_1.items()
 }
-stations_2_shifted = {
-    name: (x, y + 10) for name, (x, y) in stations_2.items()
+Dict_stations_2_shifted = {
+    name: (x, y + 10) for name, (x, y) in Dict_stations_2.items()
 }
 # stations_3_shifted = {
 #     name: (x, y + 10) for name, (x, y) in stations_3.items()
@@ -259,21 +257,36 @@ stations_2_shifted = {
 
 # 모든 역 좌표 병합
 stations = {}
-stations.update(stations_1_shifted)
-stations.update(stations_2_shifted)
-stations.update(stations_3)
+stations.update(Dict_stations_1_shifted)
+stations.update(Dict_stations_2_shifted)
+stations.update(Dict_stations_3)
+
+#좌표 이동
+shift_x = 80
+shift_y = -15
+stations = {
+    name: (x + shift_x, y + shift_y)
+    for name, (x, y) in stations.items()
+}
 
 # 모든 연결 병합
 edges = edges_1 + edges_2 + edges_3
 edges += [(b, a) for a, b in edges] #역순 연결 추가(양방향)
+
+edges += [
+    ("반월당", "청라언덕"), ("청라언덕", "반월당"),   #환승 역들만 경로 추가로 지정
+    ("청라언덕", "남산"), ("남산", "청라언덕"),       
+    ("명덕", "반월당"), ("반월당", "명덕")          
+]
+
 
 root = tk.Tk()
 root.geometry("1200x850")
 
 apply_styles() #test_style2.py에서 정의
 
-c = tk.Canvas(root, width=1100, height=700, bg="white")
-c.pack()
+c = tk.Canvas(root, width=1200, height=700, bg="white")
+c.pack(padx=20, pady=20,anchor="center")
 
 # 기본 노선
 for a,b in edges_1:
