@@ -10,7 +10,6 @@ DfLine2_lower = pd.read_csv("./data/Daegu2_lower.csv",encoding="ANSI")
 DfLine3_upper = pd.read_csv("./data/Daegu3_upper.csv",encoding="ANSI")
 DfLine3_lower = pd.read_csv("./data/Daegu3_lower.csv",encoding="ANSI")
 
-
 #///////////////////////읽어온 데이터를 역 간 소요시간 데이터 만들기
 DictInterval_data = {}
 
