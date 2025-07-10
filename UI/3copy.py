@@ -1,15 +1,10 @@
 import ttkbootstrap as tb
-import tkinter as tk
 from tkinter import ttk
-from collections import deque #최단 경로 찾기용
+import tkinter as tk
+from collections import deque
 
-def show_coords(event):
-    print(f"Mouse at ({event.x}, {event.y})")
-
-StrStart_sty = None
-StrEnd_sty = None
-start_circle = None
-end_circle = None
+selected_start = None
+selected_end = None
 
 root = tb.Window(themename="flatly")
 root.geometry("1200x1080")
@@ -18,81 +13,48 @@ select_mode = tk.StringVar(value="none")
 c = tk.Canvas(root, width=1100, height=700, bg="white")
 c.pack()
 
-def on_station_click(event): #클릭 이벤트
-    global StrStart_sty, StrEnd_sty, start_circle, end_circle
-    clicked = c.find_withtag("current") #마우스 클릭 -> 해당 리스트를 변수에 저장
-
+def on_station_click(event):
+    global selected_start, selected_end
+    clicked = c.find_withtag("current")
     if not clicked:
         return
-    
     tags = c.gettags(clicked[0])
-
-    if len(tags) < 2: #역 이름이 2개 이상
+    if len(tags) < 2:
         return
-    
     station_name = tags[1]
-
-    if StrStart_sty is None:
-        c.delete("highlight") #출발지 선택하면 이전 경로 사라짐
-        StrStart_sty = station_name
-        x,y = stations[station_name]
-
-        if start_circle:
-            c.delete(start_circle) #출발지 선택하면 이전 출발지, 도착지 사라짐
-            c.delete(end_circle)
-
-        start_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
-        start_var.set(station_name) #콤보박스에도 역 이름 생성 
-        print(f"Start selected: {StrStart_sty}")
-
-    elif StrEnd_sty is None:
-        if station_name == StrStart_sty:
-            print("출발지와 도착지가 같을 수 없습니다.")
+    
+    if selected_start is None:
+        selected_start = station_name
+        start_var.set(selected_start)
+        start_btn.config(text=selected_start)
+        clear_path_result()  # ← 추가!
+    elif selected_end is None:
+        if station_name == selected_start:
             return
-        StrEnd_sty = station_name
-        x,y = stations[station_name]
+        selected_end = station_name
+        end_var.set(selected_end)
+        end_btn.config(text=selected_end)
+        draw_highlight_path(selected_start, selected_end)
+        selected_start = None
+        selected_end = None
 
-        if end_circle: #출발지에서 이미 지우기 때문에 없어도 되지만 안정적으로 한 번 더 추가
-            c.delete(end_circle) 
 
-        end_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
-        end_var.set(station_name)
-        path = find_path(StrStart_sty, StrEnd_sty) 
-
-        move_count = len(path) - 1
-        result_text = f"🚉 {StrStart_sty} → {StrEnd_sty}\n({move_count}개 역 이동)"
-        result_var.set(result_text)
-
-        start_btn.config(state="normal", bootstyle="info-outline")
-        end_btn.config(state="normal", bootstyle="info-outline")
-        print(f"End selected: {StrEnd_sty}")
-
-        draw_highlight_path(StrStart_sty, StrEnd_sty)
-
-        #상태 초기화
-        StrStart_sty = None 
-        StrEnd_sty = None
-
-def find_path(start,end):
-    visited = set() #이미 방문한 역들 저장.
-    queue = deque([[start]]) #지금까지의 경로들을 저장
-
+def find_path(start, end):
+    visited = set()
+    queue = deque([[start]])
     while queue:
-        path = queue.popleft() #큐에서 하나의 경로 꺼내기
-        node = path[-1] #현재 마지막 위치한 역 가져오기
-
+        path = queue.popleft()
+        node = path[-1]
         if node == end:
-            return path #도착역이면 지금까지 온 경로 반환
-        
+            return path
         if node not in visited:
-            visited.add(node)  #방문 안 했을시 현재역을 방문 목록에 추가
-
-        for a,b in edges:
-                #b가 방문을 안 했다면 path+[b]로 현재 경로 뒤에 추가
-                if a==node and b not in visited:
-                    queue.append(path+[b])
-                elif b==node and a not in visited:
-                    queue.append(path+[a])
+            visited.add(node)
+            for a, b in edges:
+                if a == node and b not in visited:
+                    queue.append(path + [b])
+                elif b == node and a not in visited:
+                    queue.append(path + [a])
+    return None
 
 def show_station_list(mode):
     select_mode.set(mode)
@@ -130,50 +92,34 @@ def on_station_select(event):
     select_mode.set("none")
     result_label.pack()
 
-
-#선택한 역에 빨간원, 금색 경로
-def draw_highlight_path(start,end):
-    print(f"Highlight path from {start} to {end}")
-
-    # 기존 경로 제거
+def draw_highlight_path(start, end):
     c.delete("highlight")
-
-
     path = find_path(start, end)
     if not path:
-        print("경로 없음")
         return
-
-    # 경로 선 그리기
-    for i in range(len(path)-1):
-        a, b = path[i], path[i+1]
+    for i in range(len(path) - 1):
+        a, b = path[i], path[i + 1]
         x1, y1 = stations[a]
         x2, y2 = stations[b]
         c.create_line(x1, y1, x2, y2, fill="blue", width=6, tags="highlight")
-
      #빨간원 표시
     for station in path:
         x, y = stations[station]
         c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black", tags="highlight")
 
-
-#입력 방식으로 경로찾기
 def on_find_route():
     start = start_var.get()
     end = end_var.get()
-
     if start not in stations or end not in stations or start == end:
         result_var.set("올바른 출발지/도착지를 선택하세요.")
         return
-    
-    path = find_path(start,end)
+    path = find_path(start, end)
     if not path:
         result_var.set("경로를 찾을 수 없습니다.")
         c.delete("highlight")
         return
+    draw_highlight_path(start, end)
     
-    draw_highlight_path(start,end)
-
     move_count = len(path) - 1
     result_text = f"🚉 {start} → {end}\n({move_count}개 역 이동)"
     result_var.set(result_text)
@@ -181,7 +127,8 @@ def on_find_route():
     start_btn.config(state="normal", bootstyle="info-outline")
     end_btn.config(state="normal", bootstyle="info-outline")
 
-# 역 좌표
+
+# --- 역 좌표 데이터 ---
 Dict_stations_1 = {
     "설화명곡": (157, 127),
     "화원": (157, 157),
@@ -292,7 +239,7 @@ Dict_stations_3 = {
     "칠곡경대병원": (155, 690),
 }
 
-# 연결리스트
+
 edges_1 = [
     (a, b) for a, b in zip(list(Dict_stations_1), list(Dict_stations_1)[1:])
 ]
@@ -311,19 +258,15 @@ Dict_stations_1_shifted = {
 Dict_stations_2_shifted = {
     name: (x, y + 10) for name, (x, y) in Dict_stations_2.items()
 }
-# stations_3_shifted = {
-#     name: (x, y + 10) for name, (x, y) in stations_3.items()
-# }
+#stations_1_shifted = {name: (x, y - 40) for name, (x, y) in stations_1.items()}
 
-
-# 모든 역 좌표 병합
 stations = {}
 stations.update(Dict_stations_1_shifted)
 stations.update(Dict_stations_2_shifted)
 stations.update(Dict_stations_3)
 
 #좌표 이동
-shift_x = 80
+shift_x = 50
 shift_y = -15
 stations = {
     name: (x + shift_x, y + shift_y)
@@ -336,33 +279,32 @@ edges += [(b, a) for a, b in edges] #역순 연결 추가(양방향)
 
 edges += [
     ("반월당", "청라언덕"), ("청라언덕", "반월당"),   #환승 역들만 경로 추가로 지정
-    ("청라언덕", "남산"), ("남산", "청라언덕"),  
+    ("청라언덕", "남산"), ("남산", "청라언덕"),
     ("남산","명덕"), ("명덕","남산"),      
     ("명덕", "반월당"), ("반월당", "명덕")          
 ]
-
-# 기본 노선
+# 노선별 기본선 그리기
 for a,b in edges_1:
     x1,y1 = stations[a]; x2,y2 = stations[b]
     c.create_line(x1,y1,x2,y2, fill="#F8064A",width=3)
 
-for a, b in edges_2:
-    x1, y1 = stations[a]
-    x2, y2 = stations[b]
-    c.create_line(x1, y1, x2, y2, fill="#2ED5AE", width=3)
+for a,b in edges_2:
+    x1,y1 = stations[a]; x2,y2 = stations[b]
+    c.create_line(x1,y1,x2,y2, fill="#2ED5AE",width=3)
 
-for a, b in edges_3:
-    x1, y1 = stations[a]
-    x2, y2 = stations[b]
-    c.create_line(x1, y1, x2, y2, fill="#FFD700", width=3)
+for a,b in edges_3:
+    x1,y1 = stations[a]; x2,y2 = stations[b]
+    c.create_line(x1,y1,x2,y2, fill="#FFD700",width=3)
 
-for name, (x,y) in stations.items():
+for name,(x,y) in stations.items():
     c.create_oval(x-6,y-6,x+6,y+6, fill="white", outline="black", tags=("station", name))
     c.create_text(x,y-12, text=name, font=("Arial",8))
 
-c.tag_bind("station","<Button-1>", on_station_click)
+c.tag_bind("station", "<Button-1>", on_station_click)
 
-#입력 박스
+
+# 생략: 선 그리기, 역 표시, 이벤트 바인딩
+
 frame = tb.Frame(root)
 frame.pack(pady=35)
 
@@ -417,6 +359,4 @@ def create_station_tabs(parent):
 
 notebook = create_station_tabs(station_listbox_frame)
 
-
 root.mainloop()
-
