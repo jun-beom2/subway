@@ -117,18 +117,14 @@ try :
     ListRoutes = di.routes(DictPrev,StrDestin)
   
 
-    print("최단시간", DictDistance[StrDestin])
+    
     print(ListRoutes)
 
     firsttransfer,lasttransfer =transfer(ListRoutes)
 
-    #print(checkupdown(StrDepart,firsttransfer,ListLine1))
-    #print(checkupdown(StrDepart,firsttransfer,ListLine2))
-    #print(checkupdown(StrDepart,firsttransfer,ListLine3))
-
     TimeDepart= getdeparttime(StrDepart,firsttransfer)
-    TimeArrival = timedelta(minutes=DictDistance[StrDestin])
-    
+    TimeArrival = (datetime.combine(datetime.today().date(), TimeDepart)+ timedelta(minutes=DictDistance[StrDestin])).time()
+    print(f"최단시간 기준 소요시간: {DictDistance[StrDestin]}분")
     print(f"출발시간: {TimeDepart}")
     print(f"도착시간: {TimeArrival}")
 
