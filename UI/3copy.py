@@ -22,7 +22,7 @@ def on_station_click(event):
     if len(tags) < 2:
         return
     station_name = tags[1]
-    
+
     if selected_start is None:
         selected_start = station_name
         start_var.set(selected_start)
