@@ -1,7 +1,7 @@
+import ttkbootstrap as tb
 import tkinter as tk
 from tkinter import ttk
 from collections import deque #최단 경로 찾기용
-from test_style2 import *
 
 def show_coords(event):
     print(f"Mouse at ({event.x}, {event.y})")
@@ -10,6 +10,13 @@ StrStart_sty = None
 StrEnd_sty = None
 start_circle = None
 end_circle = None
+
+root = tb.Window(themename="flatly")
+root.geometry("1200x1080")
+select_mode = tk.StringVar(value="none")
+
+c = tk.Canvas(root, width=1100, height=700, bg="white")
+c.pack()
 
 def on_station_click(event): #클릭 이벤트
     global StrStart_sty, StrEnd_sty, start_circle, end_circle
@@ -51,7 +58,13 @@ def on_station_click(event): #클릭 이벤트
         end_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
         end_var.set(station_name)
         path = find_path(StrStart_sty, StrEnd_sty) 
-        result_var.set(" → ".join(path)) #좌표용 경로 표시
+
+        move_count = len(path) - 1
+        result_text = f"🚉 {StrStart_sty} → {StrEnd_sty}\n({move_count}개 역 이동)"
+        result_var.set(result_text)
+
+        start_btn.config(state="normal", bootstyle="info-outline")
+        end_btn.config(state="normal", bootstyle="info-outline")
         print(f"End selected: {StrEnd_sty}")
 
         draw_highlight_path(StrStart_sty, StrEnd_sty)
@@ -81,6 +94,42 @@ def find_path(start,end):
                 elif b==node and a not in visited:
                     queue.append(path+[a])
 
+def show_station_list(mode):
+    select_mode.set(mode)
+    if mode == "start":
+        # 비활성화는 하지 않고 색만 바꿈
+        start_btn.config(state="normal", bootstyle="secondary-outline")
+        end_btn.config(state="normal", bootstyle="info-outline")
+    else:
+        end_btn.config(state="normal", bootstyle="secondary-outline")
+        start_btn.config(state="normal", bootstyle="info-outline")
+    station_listbox_frame.pack(pady=5)
+    result_label.pack_forget()
+
+def on_station_select(event):
+    try:
+        widget = event.widget
+        selection = widget.curselection()
+        if not selection:
+            return
+        selected = widget.get(selection[0])
+    except:
+        return
+
+    if select_mode.get() == "start":
+        start_var.set(selected)
+        start_btn.config(text=selected)
+        clear_path_result()  # ← 추가!
+    elif select_mode.get() == "end":
+        end_var.set(selected)
+        end_btn.config(text=selected)
+        clear_path_result()  # ← 추가!
+
+
+    station_listbox_frame.pack_forget()
+    select_mode.set("none")
+    result_label.pack()
+
 
 #선택한 역에 빨간원, 금색 경로
 def draw_highlight_path(start,end):
@@ -100,7 +149,13 @@ def draw_highlight_path(start,end):
         a, b = path[i], path[i+1]
         x1, y1 = stations[a]
         x2, y2 = stations[b]
-        c.create_line(x1, y1, x2, y2, fill="gold", width=6, tags="highlight")
+        c.create_line(x1, y1, x2, y2, fill="blue", width=6, tags="highlight")
+
+     #빨간원 표시
+    for station in path:
+        x, y = stations[station]
+        c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black", tags="highlight")
+
 
 #입력 방식으로 경로찾기
 def on_find_route():
@@ -118,7 +173,13 @@ def on_find_route():
         return
     
     draw_highlight_path(start,end)
-    result_var.set(" → ".join(path)) #입력용 경로 표시
+
+    move_count = len(path) - 1
+    result_text = f"🚉 {start} → {end}\n({move_count}개 역 이동)"
+    result_var.set(result_text)
+
+    start_btn.config(state="normal", bootstyle="info-outline")
+    end_btn.config(state="normal", bootstyle="info-outline")
 
 # 역 좌표
 Dict_stations_1 = {
@@ -275,18 +336,10 @@ edges += [(b, a) for a, b in edges] #역순 연결 추가(양방향)
 
 edges += [
     ("반월당", "청라언덕"), ("청라언덕", "반월당"),   #환승 역들만 경로 추가로 지정
-    ("청라언덕", "남산"), ("남산", "청라언덕"),       
+    ("청라언덕", "남산"), ("남산", "청라언덕"),  
+    ("남산","명덕"), ("명덕","남산"),      
     ("명덕", "반월당"), ("반월당", "명덕")          
 ]
-
-
-root = tk.Tk()
-root.geometry("1200x850")
-
-apply_styles() #test_style2.py에서 정의
-
-c = tk.Canvas(root, width=1200, height=700, bg="white")
-c.pack(padx=20, pady=20,anchor="center")
 
 # 기본 노선
 for a,b in edges_1:
@@ -304,29 +357,65 @@ for a, b in edges_3:
     c.create_line(x1, y1, x2, y2, fill="#FFD700", width=3)
 
 for name, (x,y) in stations.items():
-    color = "white"  # 기본 흰색
-    c.create_oval(x-6,y-6,x+6,y+6, fill=color,outline="black", tags=("station",name))
+    c.create_oval(x-6,y-6,x+6,y+6, fill="white", outline="black", tags=("station", name))
     c.create_text(x,y-12, text=name, font=("Arial",8))
 
 c.tag_bind("station","<Button-1>", on_station_click)
 
 #입력 박스
-frame = tk.Frame(root)
-frame.pack(pady=10)
+frame = tb.Frame(root)
+frame.pack(pady=35)
 
 start_var = tk.StringVar()
 end_var = tk.StringVar()
 result_var = tk.StringVar()
 
-ttk.Label(frame, text="출발지:").grid(row=0, column=0)
-ttk.Combobox(frame, textvariable=start_var, values=list(stations.keys()), width=15, font=("Arial", 12)).grid(row=0, column=1, padx=10)
+start_btn = tb.Button(frame, textvariable=start_var, bootstyle="info-outline", command=lambda: show_station_list("start"), width=15)
+start_var.set("출발역 선택")
+start_btn.grid(row=0, column=0, padx=10)
 
-ttk.Label(frame, text="도착지:").grid(row=0, column=2)
-ttk.Combobox(frame, textvariable=end_var, values=list(stations.keys()), width=15,font=("Arial", 12)).grid(row=0, column=3, padx=10)
+end_btn = tb.Button(frame, textvariable=end_var, bootstyle="info-outline", command=lambda: show_station_list("end"), width=15)
+end_var.set("도착역 선택")
+end_btn.grid(row=0, column=1, padx=10)
 
-ttk.Button(frame, text="경로 찾기", command=on_find_route).grid(row=0, column=4, padx=10)
+tb.Button(frame, text="경로 찾기", command=on_find_route, bootstyle="primary").grid(row=0, column=2, padx=10)
 
-tk.Label(root, textvariable=result_var, font=("Arial", 14), fg="black").pack(pady=10)
+result_label = tb.Label(
+    root,
+    textvariable=result_var, 
+    font=("Arial", 14), 
+    bootstyle="info",
+    anchor="center",
+    justify="center"
+    )
+result_label.pack(pady=10)
+
+station_listbox_frame = ttk.Frame(root)
+station_listbox_frame.pack_forget()
+
+def clear_path_result():
+    result_var.set("")     # 결과 라벨 초기화
+    c.delete("highlight")  # 지도 위 경로선 제거
+
+def create_station_tabs(parent):
+    notebook = ttk.Notebook(parent)
+    notebook.pack(fill="both", expand=True)
+    lines = [
+        ("1호선", Dict_stations_1),
+        ("2호선", Dict_stations_2),
+        ("3호선", Dict_stations_3),
+    ]
+    for line_name, station_dict in lines:
+        frame = ttk.Frame(notebook)
+        notebook.add(frame, text=line_name)
+        listbox = tk.Listbox(frame, width=30, height=10, font=("마란고딕", 13))
+        listbox.pack(fill="both", expand=True)
+        for station_name in station_dict.keys():
+            listbox.insert(tk.END, station_name)
+        listbox.bind("<<ListboxSelect>>", on_station_select)
+    return notebook
+
+notebook = create_station_tabs(station_listbox_frame)
 
 
 root.mainloop()
