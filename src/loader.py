@@ -39,3 +39,5 @@ for i in range(DfLine3_lower.shape[0]-1):
     DictInterval_data.setdefault(DfLine3_lower["역명"].loc[i],{}).update(element)
 
 
+DfLines_upper = [DfLine1_upper,DfLine2_upper,DfLine3_upper]
+DFLines_lower = [DfLine1_lower,DfLine2_lower,DfLine3_lower]

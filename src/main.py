@@ -38,6 +38,8 @@ for station in ListLine2 :
     if station in ListLine3 :
         ListTrans.append(station)
 
+ListLines = [ListLine1,ListLine2,ListLine3]
+
 def checkupdown(start, end, listline) :
     
     if start in listline and end in listline :
@@ -57,60 +59,25 @@ def getdeparttime(depart,destin) :
     if destin == "없음" :
         destin = StrDestin
     
-    if checkupdown(depart,destin,ListLine1) < 0 :
-        for index,time in enumerate(ld.DfLine1_lower.iloc[ListLine1.index(depart)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0):
-                    break
-    elif checkupdown(depart,destin,ListLine1) > 0 :
-        for index,time in enumerate(ld.DfLine1_upper.iloc[-(ListLine1.index(depart)+1)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0) : 
-                    break
-    elif checkupdown(depart,destin,ListLine2) < 0 :
-        for index,time in enumerate(ld.DfLine2_lower.iloc[ListLine2.index(depart)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0) : 
-                    break
-    elif checkupdown(depart,destin,ListLine2) > 0 :
-        for index,time in enumerate(ld.DfLine2_upper.iloc[-(ListLine2.index(depart)+1)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0) : 
-                    break
-    elif checkupdown(depart,destin,ListLine3) < 0 :
-        for index,time in enumerate(ld.DfLine3_lower.iloc[ListLine3.index(depart)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0) : 
-                    break
-    elif checkupdown(depart,destin,ListLine3) > 0 :
-        for index,time in enumerate(ld.DfLine3_upper.iloc[-(ListLine3.index(depart)+1)]) :
-            if index > 3 and pd.notna(time) :
-                t1 = datetime.strptime(currenttime, fmt)
-                t2 = datetime.strptime(str(time),fmts)
-                diff = t1-t2
-                departtime = t2
-                if diff < timedelta(0) : 
-                    break
+    for i, listline in enumerate(ListLines) :
+        if checkupdown(depart,destin,listline) < 0 :
+            for index,time in enumerate(ld.DFLines_lower[i].iloc[listline.index(depart)]) :
+                if index > 3 and pd.notna(time) :
+                    t1 = datetime.strptime(currenttime, fmt)
+                    t2 = datetime.strptime(str(time),fmts)
+                    diff = t1-t2
+                    departtime = t2
+                    if diff < timedelta(0):
+                        break
+        elif checkupdown(depart,destin,listline) > 0 :
+            for index,time in enumerate(ld.DfLines_upper[i].iloc[-(listline.index(depart)+1)]) :
+                if index > 3 and pd.notna(time) :
+                    t1 = datetime.strptime(currenttime, fmt)
+                    t2 = datetime.strptime(str(time),fmts)
+                    diff = t1-t2
+                    departtime = t2
+                    if diff < timedelta(0) : 
+                        break
 
     return departtime.time()
 
@@ -120,50 +87,19 @@ def transfer(routes) :
     first = "없음"
     last = "없음"
     count = 0
+
+    listindexs = [(0,1),(0,2),(1,0),(1,2),(2,0),(2,1)]
+
     for index, station in enumerate(routes) :
         if station in ListTrans and index > 0 and index < len(routes)-1:
-            if routes[index-1] in ListLine1 and routes[index+1] in ListLine2 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 1호선에서 2호선으로 갈아타주시길 바랍니다.")
-            elif routes[index-1] in ListLine1 and routes[index+1] in ListLine3 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 1호선에서 3호선으로 갈아타주시길 바랍니다.")
-            elif routes[index-1] in ListLine2 and routes[index+1] in ListLine1 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 2호선에서 1호선으로 갈아타주시길 바랍니다.")
-            elif routes[index-1] in ListLine2 and routes[index+1] in ListLine3 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 2호선에서 3호선으로 갈아타주시길 바랍니다.")
-            elif routes[index-1] in ListLine3 and routes[index+1] in ListLine1 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 3호선에서 1호선으로 갈아타주시길 바랍니다.")
-            elif routes[index-1] in ListLine3 and routes[index+1] in ListLine2 and not routes[index+1] in ListTrans:
-                if count == 0 :
-                    first = station
-                    last =station
-                last = station
-                count += 1
-                print(f"{station}에서 내려 3호선에서 2호선으로 갈아타주시길 바랍니다.")
+            for listindex in listindexs:
+                if routes[index-1] in ListLines[listindex[0]] and routes[index+1] in ListLines[listindex[1]] and not routes[index+1] in ListTrans:
+                    if count == 0 :
+                        first = station
+                        last = station
+                    last = station
+                    count += 1
+                    print(f"{station}에서 내려 {listindex[0]+1}호선에서 {listindex[1]+1}호선으로 갈아타주시길 바랍니다.")
     return first, last
 
 StrDepart = "다사" # input으로 입력받아서 할 예정
@@ -190,9 +126,11 @@ try :
     #print(checkupdown(StrDepart,firsttransfer,ListLine2))
     #print(checkupdown(StrDepart,firsttransfer,ListLine3))
 
-    a= getdeparttime(StrDepart,firsttransfer)
-
-    print(f"출발시간: {a}")
+    TimeDepart= getdeparttime(StrDepart,firsttransfer)
+    TimeArrival = timedelta(minutes=DictDistance[StrDestin])
+    
+    print(f"출발시간: {TimeDepart}")
+    print(f"도착시간: {TimeArrival}")
 
 except KeyError as e:
     print("역명을 확인해주세요",e)
