@@ -3,13 +3,7 @@ from datetime import datetime, timedelta
 
 import dijkstra as di
 import loader as ld
-import utils
 
-
-#예시 인풋
-
-ex_depart = "반월당"
-ex_destin = "칠성시장"
 
 temp = ld.DfLine1_upper.loc[0]
 
@@ -18,7 +12,6 @@ ListLine1 = []
 ListLine2 = []
 ListLine3 = [] 
 ListTrans = []
-
 
 for x in ld.DfLine1_lower["역명"] :
     ListLine1.append(x)
@@ -99,7 +92,6 @@ def transfer(routes) :
                         last = station
                     last = station
                     count += 1
-                    print(f"{station}에서 내려 {listindex[0]+1}호선에서 {listindex[1]+1}호선으로 갈아타주시길 바랍니다.")
     return first, last
 
 StrDepart = "다사" # input으로 입력받아서 할 예정
@@ -111,26 +103,22 @@ lasttransfer = ""
 
 #arrivaltime = currenttime + timedelta(minutes=DictDistance[StrDestin])
 
-
-try :
-    DictDistance, DictPrev = di.dijkstra(ld.DictInterval_data,StrDepart)
-    ListRoutes = di.routes(DictPrev,StrDestin)
-  
-
+def compute_route_info(depart, destin):
+    # 다익스트라
+    dist, prev = di.dijkstra(ld.DictInterval_data, depart)
+    route = di.routes(prev, destin)
+    # 환승
+    first_tr, last_tr = transfer(route)
+    # 출발/도착 시각
+    depart_time = getdeparttime(depart, first_tr or depart)
+    arrive_time = (datetime.combine(datetime.now(), depart_time) + timedelta(minutes=dist[destin])).time()
     
-    print(ListRoutes)
-
-    firsttransfer,lasttransfer =transfer(ListRoutes)
-
-    TimeDepart= getdeparttime(StrDepart,firsttransfer)
-    TimeArrival = (datetime.combine(datetime.today().date(), TimeDepart)+ timedelta(minutes=DictDistance[StrDestin])).time()
-    print(f"최단시간 기준 소요시간: {DictDistance[StrDestin]}분")
-    print(f"출발시간: {TimeDepart}")
-    print(f"도착시간: {TimeArrival}")
-
-except KeyError as e:
-    print("역명을 확인해주세요",e)
-
-
-
+    return {
+        'route': route,
+        'distance': dist[destin],
+        'first_transfer': first_tr,
+        'last_transfer' : last_tr,
+        'depart_time': depart_time,
+        'arrival_time': arrive_time
+    }
 

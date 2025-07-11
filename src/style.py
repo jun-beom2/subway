@@ -2,6 +2,8 @@ import ttkbootstrap as tb
 import tkinter as tk
 from tkinter import ttk
 from collections import deque #최단 경로 찾기용
+from main import compute_route_info
+
 
 def show_coords(event):
     print(f"Mouse at ({event.x}, {event.y})")
@@ -57,17 +59,8 @@ def on_station_click(event): #클릭 이벤트
 
         end_circle = c.create_oval(x-6, y-6, x+6, y+6, fill="red", outline="black")
         end_var.set(station_name)
-        path = find_path(StrStart_sty, StrEnd_sty) 
-
-        move_count = len(path) - 1
-        result_text = f"🚉 {StrStart_sty} → {StrEnd_sty}\n({move_count}개 역 이동)"
-        result_var.set(result_text)
-
-        start_btn.config(state="normal", bootstyle="info-outline")
-        end_btn.config(state="normal", bootstyle="info-outline")
-        print(f"End selected: {StrEnd_sty}")
-
-        draw_highlight_path(StrStart_sty, StrEnd_sty)
+        
+        show_route_and_info(StrStart_sty,StrEnd_sty)
 
         #상태 초기화
         StrStart_sty = None 
@@ -165,21 +158,23 @@ def on_find_route():
     if start not in stations or end not in stations or start == end:
         result_var.set("올바른 출발지/도착지를 선택하세요.")
         return
-    
-    path = find_path(start,end)
-    if not path:
+    show_route_and_info(start, end)
+
+def show_route_and_info(start, end):
+    try:
+        info = compute_route_info(start, end)
+        text = (
+            f"🚉{'->'.join(info['route'])}\n"
+            f"소요 시간: {info['distance']}분\n"
+            f"첫 환승: {info['first_transfer'] or '없음'}\n"
+            f"출발: {info['depart_time']}\n"
+            f"도착: {info['arrival_time']}"
+        )
+        result_var.set(text)
+        draw_highlight_path(start, end)
+    except KeyError:
         result_var.set("경로를 찾을 수 없습니다.")
         c.delete("highlight")
-        return
-    
-    draw_highlight_path(start,end)
-
-    move_count = len(path) - 1
-    result_text = f"🚉 {start} → {end}\n({move_count}개 역 이동)"
-    result_var.set(result_text)
-
-    start_btn.config(state="normal", bootstyle="info-outline")
-    end_btn.config(state="normal", bootstyle="info-outline")
 
 # 역 좌표
 Dict_stations_1 = {
